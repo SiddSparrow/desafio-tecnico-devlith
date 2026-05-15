@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
+use App\Jobs\ExportarAlunosJob;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 
 class ListUsers extends ListRecords
@@ -14,6 +16,26 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('exportar_alunos')
+                ->label('Exportar Alunos')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Exportar planilha de alunos')
+                ->modalDescription(
+                    'A exportação será processada em segundo plano. ' .
+                    'Você receberá uma notificação assim que o arquivo estiver pronto.'
+                )
+                ->modalSubmitActionLabel('Iniciar exportação')
+                ->action(function (): void {
+                    ExportarAlunosJob::dispatch(auth()->user());
+
+                    Notification::make()
+                        ->title('Exportação iniciada!')
+                        ->body('Você será notificado quando o arquivo estiver pronto.')
+                        ->info()
+                        ->send();
+                }),
         ];
     }
 }
