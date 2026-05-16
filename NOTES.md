@@ -1,5 +1,15 @@
 # Notas de Implementação
 
+## Instalação
+
+```bash
+docker compose up -d
+docker compose exec app composer install
+docker compose exec app php artisan migrate --seed
+```
+
+Acesse `http://localhost/admin` com `admin@admin.com` / `admin`.
+
 ## Instruções de Uso
 
 O painel oferece três pontos de entrada para exportação:
