@@ -47,6 +47,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->selectCurrentPageOnly()
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nome')
