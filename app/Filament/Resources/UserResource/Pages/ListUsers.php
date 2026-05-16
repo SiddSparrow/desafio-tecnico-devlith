@@ -16,12 +16,12 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
-            Actions\Action::make('exportar_alunos')
-                ->label('Exportar Alunos')
+            Actions\Action::make('exportar_todos')
+                ->label('Exportar Todos')
                 ->icon('heroicon-o-arrow-down-tray')
-                ->color('success')
+                ->color('gray')
                 ->requiresConfirmation()
-                ->modalHeading('Exportar planilha de alunos')
+                ->modalHeading('Exportar todos os alunos')
                 ->modalDescription(
                     'A exportação será processada em segundo plano. ' .
                     'Você receberá uma notificação assim que o arquivo estiver pronto.'

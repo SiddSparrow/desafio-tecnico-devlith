@@ -19,8 +19,9 @@ class ProcessarChunkExportJob implements ShouldQueue
     public int $tries   = 1;
 
     public function __construct(
-        public int $lastId,
-        public int $chunkSize,
+        public int   $lastId,
+        public int   $chunkSize,
+        public array $userIds = [],
     ) {}
 
     public function handle(): void
@@ -40,6 +41,7 @@ class ProcessarChunkExportJob implements ShouldQueue
         $userIds = DB::table('matriculas')
             ->select('user_id')
             ->where('user_id', '>', $this->lastId)
+            ->when(!empty($this->userIds), fn($q) => $q->whereIn('user_id', $this->userIds))
             ->distinct()
             ->orderBy('user_id')
             ->limit($this->chunkSize)

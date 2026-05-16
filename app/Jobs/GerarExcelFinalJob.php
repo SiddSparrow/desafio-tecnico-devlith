@@ -33,12 +33,14 @@ class GerarExcelFinalJob implements ShouldQueue
             'arquivo'  => $this->nomeArquivo,
         ]);
 
-        $oldUmask = umask(0022);
         Storage::disk('local')->makeDirectory('exports');
+        chmod(Storage::disk('local')->path('exports'), 0755);
+
         $fullPath = Storage::disk('local')->path($this->nomeArquivo);
 
         $this->escreverXlsx($fullPath);
-        umask($oldUmask);
+
+        chmod($fullPath, 0644);
 
         DB::table('exportacao_alunos_temp')
             ->where('batch_id', $this->batchId)

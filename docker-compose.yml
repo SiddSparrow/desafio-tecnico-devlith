@@ -51,6 +51,8 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["php /app/artisan queue:work --queue=export --sleep=3 --tries=3 --timeout=600"]
     restart: unless-stopped
+    environment:
+      - LOG_CHANNEL=stderr
     volumes:
       - .:/app:delegated
     networks:
@@ -64,6 +66,8 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["php -d memory_limit=512M /app/artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=600"]
     restart: unless-stopped
+    environment:
+      - LOG_CHANNEL=stderr
     volumes:
       - .:/app:delegated
     networks:
