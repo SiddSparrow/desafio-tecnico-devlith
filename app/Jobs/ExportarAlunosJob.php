@@ -24,7 +24,8 @@ class ExportarAlunosJob implements ShouldQueue
 
     public function __construct(
         private readonly User  $solicitante,
-        private readonly array $userIds = [],
+        private readonly array $userIds   = [],
+        private readonly ?int  $escolaId  = null,
     ) {}
 
     public function middleware(): array
@@ -50,17 +51,20 @@ class ExportarAlunosJob implements ShouldQueue
         // e adiciona 0 na frente para o primeiro chunk (WHERE id > 0)
         $hasFilter  = !empty($this->userIds);
         $inIds      = $hasFilter ? implode(',', array_map('intval', $this->userIds)) : null;
+        $escolaId   = $this->escolaId;
 
         $totalAlunos = DB::table('users')
             ->whereExists(fn($q) => $q->select(DB::raw(1))
                 ->from('matriculas')
-                ->whereColumn('matriculas.user_id', 'users.id'))
+                ->whereColumn('matriculas.user_id', 'users.id')
+                ->when($escolaId, fn($q) => $q->where('escola_id', $escolaId)))
             ->when($hasFilter, fn($q) => $q->whereIn('users.id', $this->userIds))
             ->count();
 
         // Usa ROW_NUMBER() para buscar apenas os IDs de fronteira de cada chunk
         // sem carregar todos os IDs na memória PHP
-        $filterClause = $hasFilter ? "AND u.id IN ($inIds)" : '';
+        $filterClause  = $hasFilter ? "AND u.id IN ($inIds)" : '';
+        $escolaClause  = $escolaId  ? "AND EXISTS (SELECT 1 FROM matriculas m2 WHERE m2.user_id = u.id AND m2.escola_id = " . (int) $escolaId . ")" : '';
         $lastIds = collect([0])->merge(
             DB::select("
                 SELECT id FROM (
@@ -70,6 +74,7 @@ class ExportarAlunosJob implements ShouldQueue
                         SELECT 1 FROM matriculas m WHERE m.user_id = u.id
                     )
                     $filterClause
+                    $escolaClause
                 ) t
                 WHERE rn % :chunk = 0
             ", ['chunk' => $chunkSize])
@@ -111,7 +116,7 @@ class ExportarAlunosJob implements ShouldQueue
                 ->each(function ($grupo) use ($batch, $chunkSize) {
                     $batch->add(
                         $grupo->map(
-                            fn($lastId) => (new ProcessarChunkExportJob($lastId, $chunkSize, $this->userIds))
+                            fn($lastId) => (new ProcessarChunkExportJob($lastId, $chunkSize, $this->userIds, $this->escolaId))
                             ->onQueue('export')
                         )->values()->all()
                     );
