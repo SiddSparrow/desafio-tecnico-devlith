@@ -21,8 +21,7 @@ class ProcessarChunkExportJob implements ShouldQueue
     public function __construct(
         public int   $lastId,
         public int   $chunkSize,
-        public array $userIds  = [],
-        public ?int  $escolaId = null,
+        public array $userIds = [],
     ) {}
 
     public function handle(): void
@@ -43,7 +42,6 @@ class ProcessarChunkExportJob implements ShouldQueue
             ->select('user_id')
             ->where('user_id', '>', $this->lastId)
             ->when(!empty($this->userIds), fn($q) => $q->whereIn('user_id', $this->userIds))
-            ->when($this->escolaId, fn($q) => $q->where('escola_id', $this->escolaId))
             ->distinct()
             ->orderBy('user_id')
             ->limit($this->chunkSize)
