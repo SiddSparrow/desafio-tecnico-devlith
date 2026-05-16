@@ -13,6 +13,9 @@ services:
       - .:/app:delegated
     networks:
       - local
+    depends_on:
+      database:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -37,7 +40,39 @@ services:
     networks:
       - local
     healthcheck:
-      test: mysqladmin -p${DB_PASSWORD-pass} ping
+      test: ["CMD", "mysqladmin", "-p${DB_PASSWORD:-pass}", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+  worker-export:
+    image: kooldev/php:8.3-nginx
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["php /app/artisan queue:work --queue=export --sleep=3 --tries=3 --timeout=600"]
+    restart: unless-stopped
+    volumes:
+      - .:/app:delegated
+    networks:
+      - local
+    depends_on:
+      database:
+        condition: service_healthy
+  worker-default:
+    image: kooldev/php:8.3-nginx
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["php -d memory_limit=512M /app/artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=600"]
+    restart: unless-stopped
+    volumes:
+      - .:/app:delegated
+    networks:
+      - local
+    deploy:
+      replicas: 2
+    depends_on:
+      database:
+        condition: service_healthy
   node:
     image: kooldev/node:20
     command: [ "npm", "run", "dev" ]
