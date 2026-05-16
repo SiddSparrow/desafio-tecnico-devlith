@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Tables\Actions\ExportarAlunosBulkAction;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,7 +12,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -75,29 +75,7 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('exportar_alunos')
-                        ->label('Exportar Selecionados')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->modalHeading('Exportar alunos selecionados')
-                        ->modalDescription(
-                            'A exportação será processada em segundo plano. ' .
-                            'Você receberá uma notificação assim que o arquivo estiver pronto.'
-                        )
-                        ->modalSubmitActionLabel('Iniciar exportação')
-                        ->deselectRecordsAfterCompletion()
-                        ->action(function ($livewire): void {
-                            $ids = array_map('intval', $livewire->selectedTableRecords ?? []);
-
-                            \App\Jobs\ExportarAlunosJob::dispatch(Auth::user(), $ids);
-
-                            \Filament\Notifications\Notification::make()
-                                ->title('Exportação iniciada!')
-                                ->body('Você será notificado quando o arquivo estiver pronto.')
-                                ->info()
-                                ->send();
-                        }),
+                    ExportarAlunosBulkAction::make(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

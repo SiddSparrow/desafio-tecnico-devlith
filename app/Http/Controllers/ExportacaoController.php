@@ -15,6 +15,6 @@ class ExportacaoController extends Controller
             abort(404);
         }
 
-        return response()->download($fullPath, 'alunos_' . now()->format('d-m-Y') . '.xlsx');
+        return response()->download($fullPath, basename($caminho));
     }
 }
